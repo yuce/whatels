@@ -1,0 +1,16 @@
+{application, 'whatels',
+ [{description, "Erlang Language Services"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {'whatels_app', []}},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {maintainers, ["Yuce Tekol"]},
+  {licenses, ["MIT"]},
+  {links, []}
+ ]}.
