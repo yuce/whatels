@@ -53,9 +53,8 @@ process_messages(Msgs, State) ->
     {lists:reverse(ProcMsgs), NewState}.
 
 process_message({symbolsQ, Path}, State) ->
-    Ast = whatels_e:ast(Path),
-    Functions = encode_functions(whatels_e:functions(Ast)),
-    Symbols = #{functions => Functions},
+    Ast = whatels_e:ast_path(Path),
+    Symbols = encode_symbols(whatels_e:symbols(Ast)),
     Bin = whatels_msg:encode({symbols, Symbols}),
     {Bin, State};
 
@@ -71,3 +70,14 @@ encode_functions(Functions) ->
         #{name => Name, arity => Arity, line => Line}
     end,
     lists:map(F, Functions).
+
+encode_errors(Errors) ->
+    F = fun({Err, Line}) ->
+        #{error => Err, line => Line}
+    end,
+    lists:map(F, Errors).
+
+encode_symbols(#{functions := Functions,
+                 errors := Errors}) ->
+    #{functions => encode_functions(Functions),
+      errors => encode_errors(Errors)}.
