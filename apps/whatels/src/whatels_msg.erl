@@ -12,13 +12,13 @@
 %% == API
 
 encode({symbols, Symbols}) ->
-    encode_msg(<<"SYMBOLS">>, jsx:encode(Symbols));
+    encode_msg(<<"path-symbols">>, jsx:encode(Symbols));
 
 encode({symbolsQ, Path}) ->
-    encode_msg(<<"SYMBOLS?">>, Path);
+    encode_msg(<<"path-symbols?">>, Path);
 
 encode({error, parse_error}) ->
-    encode_msg(<<"ERROR">>, <<"Parse error">>).
+    encode_msg(<<"error">>, <<"parse error">>).
 
 decode(Bin) ->
     decode_msg(Bin, [], <<>>).
@@ -78,14 +78,11 @@ extract_flip(Bin) ->
     [Op, BinPayloadSize] = binary:split(Bin, <<" ">>),
     {Op, binary_to_integer(BinPayloadSize)}.
 
-interp(<<"SYMBOLS">>, Payload) ->
+interp(<<"path-symbols">>, Payload) ->
     {symbols, jsx:decode(Payload, [return_maps])};
 
-interp(<<"SYMBOLS?">>, Payload) ->
-    {symbolsQ, Payload};
-
-interp(<<"SOURCE!">>, Payload) ->
-    {sourceX, extract_source(Payload)}.
+interp(<<"path-symbols?">>, Payload) ->
+    {symbolsQ, Payload}.
 
 extract_source(Payload) ->
     [Path, Source] = binary:split(Payload, <<"\r\n">>),
@@ -95,7 +92,7 @@ extract_source(Payload) ->
 -include_lib("eunit/include/eunit.hrl").
 
 encode_test() ->
-    E = <<"SYMBOLS 43\r\n{\"functions\":[{\"line\":15,\"name\":\"getfun\"}]}\r\n">>,
+    E = <<"path-symbols 43\r\n{\"functions\":[{\"line\":15,\"name\":\"getfun\"}]}\r\n">>,
     Symbols = #{<<"functions">> => [
         #{<<"name">> => <<"getfun">>,
           <<"line">> => 15}
@@ -107,22 +104,22 @@ decode_test() ->
     E = {symbols, #{<<"functions">> => [
                     #{<<"name">> => <<"getfun">>,
                     <<"line">> => 15}]}},
-    Bin = <<"SYMBOLS 43\r\n{\"functions\":[{\"line\":15,\"name\":\"getfun\"}]}\r\n">>,
+    Bin = <<"path-symbols 43\r\n{\"functions\":[{\"line\":15,\"name\":\"getfun\"}]}\r\n">>,
     {[R], _} = whatels_msg:decode(Bin),
     ?assertEqual(E, R).
 
 decode_symbols_test() ->
     Source = <<"apps/whatels/src/whatels_handler.erl">>,
     SourceSizeBin = integer_to_binary(byte_size(Source)),
-    Bin = <<"SYMBOLS? ", SourceSizeBin/binary, "\r\n", Source/binary, "\r\n">>,
+    Bin = <<"path-symbols? ", SourceSizeBin/binary, "\r\n", Source/binary, "\r\n">>,
     E = {symbolsQ, Source},
     {[R], _} = whatels_msg:decode(Bin),
     ?assertEqual(E, R).
 
 decode_symbols_leftovers_test() ->
-    Bin = <<"SYMBOLS? 0\r\n">>,
+    Bin = <<"path-symbols? 0\r\n">>,
     {Ls, Rem} = whatels_msg:decode(Bin),
     ?assertEqual(Ls, []),
-    ?assertEqual(Rem, <<"SYMBOLS? 0\r\n">>).
+    ?assertEqual(Rem, <<"path-symbols? 0\r\n">>).
 
 -endif.

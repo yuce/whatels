@@ -78,6 +78,14 @@ encode_errors(Errors) ->
     lists:map(F, Errors).
 
 encode_symbols(#{functions := Functions,
-                 errors := Errors}) ->
-    #{functions => encode_functions(Functions),
-      errors => encode_errors(Errors)}.
+                 errors := Errors,
+                 module := Module}) ->
+    Base = #{functions => encode_functions(Functions),
+             errors => encode_errors(Errors)},
+    % If module name is given, use it.
+    case Module of
+        0 ->
+            Base;
+        _ ->
+            Base#{module => Module}
+    end.
