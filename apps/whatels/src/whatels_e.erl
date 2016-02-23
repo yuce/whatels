@@ -5,8 +5,16 @@
 -export([ast_path/1,
          symbols/1]).
 
+-type module_name() :: 0 | atom().
+-type function_info() :: {atom(), integer(), integer()}.
+-type error_info() :: {binary() | string(), integer()}.
+-type symbols() :: #{functions => [function_info()],
+                     errors => [error_info()],
+                     module => module_name()}.
+
+
 -spec ast_path(Path :: string() | binary()) ->
-    {ok, list()}.
+    {ast, list()}.
 
 ast_path(Path) when is_binary(Path) ->
     ast_path(binary_to_list(Path));
@@ -15,6 +23,7 @@ ast_path(Path) ->
     {ok, Ast} = epp:parse_file(Path, []),
     {ast, Ast}.
 
+-spec symbols(A :: {ast, list()}) -> symbols().
 symbols({ast, Ast}) ->
     F = fun(A, {Module, Functions, Errors} = Acc) ->
         case A of

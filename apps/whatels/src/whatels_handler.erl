@@ -52,18 +52,14 @@ process_messages(Msgs, State) ->
     {ProcMsgs, NewState} = lists:foldl(F, {[], State}, Msgs),
     {lists:reverse(ProcMsgs), NewState}.
 
+-spec process_message(term(), map()) ->
+    {undefined | binary(), map()}.
+
 process_message({symbolsQ, Path}, State) ->
     Ast = whatels_e:ast_path(Path),
     Symbols = encode_symbols(whatels_e:symbols(Ast)),
     Bin = whatels_msg:encode({symbols, Symbols}),
-    {Bin, State};
-
-process_message({sourceX, {Path, Source}}, State) ->
-    Ast = whatels_e:ast(Source),
-    Asts = maps:get(ast, State),
-    NewAsts = maps:put(Path, Ast, Asts),
-    NewState = maps:put(ast, NewAsts, State),
-    {undefined, NewState}.
+    {Bin, State}.
 
 encode_functions(Functions) ->
     F = fun({Name, Arity, Line}) ->

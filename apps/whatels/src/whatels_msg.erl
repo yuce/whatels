@@ -84,10 +84,6 @@ interp(<<"path-symbols">>, Payload) ->
 interp(<<"path-symbols?">>, Payload) ->
     {symbolsQ, Payload}.
 
-extract_source(Payload) ->
-    [Path, Source] = binary:split(Payload, <<"\r\n">>),
-    {Path, Source}.
-
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
 
