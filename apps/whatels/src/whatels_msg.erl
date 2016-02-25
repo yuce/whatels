@@ -11,8 +11,10 @@
 
 %% == API
 
-encode({symbols, Symbols}) ->
-    encode_msg(<<"path-symbols">>, jsx:encode(Symbols));
+encode({symbols, Path, Symbols}) when is_binary(Path) ->
+    BinSymbols = jsx:encode(Symbols),
+    Payload = <<Path/binary, "\r\n", BinSymbols/binary>>,
+    encode_msg(<<"path-symbols">>, Payload);
 
 encode({symbolsQ, Path}) ->
     encode_msg(<<"path-symbols?">>, Path);
@@ -82,7 +84,10 @@ interp(<<"path-symbols">>, Payload) ->
     {symbols, jsx:decode(Payload, [return_maps])};
 
 interp(<<"path-symbols?">>, Payload) ->
-    {symbolsQ, Payload}.
+    {symbolsQ, Payload};
+
+interp(<<"watch!">>, Payload) ->
+    {watchX, Payload}.
 
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").

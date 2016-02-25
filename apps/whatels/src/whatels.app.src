@@ -1,6 +1,6 @@
 {application, 'whatels',
  [{description, "Erlang Language Services"},
-  {vsn, "0.1.0"},
+  {vsn, "0.2.0"},
   {registered, []},
   {mod, {'whatels_app', []}},
   {applications,
@@ -8,7 +8,7 @@
     stdlib,
     erwatch
    ]},
-  {env,[{port, 10998}]},
+  {env,[{port, 10999}]},
   {modules, []},
 
   {maintainers, ["Yuce Tekol"]},

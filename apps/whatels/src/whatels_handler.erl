@@ -3,12 +3,16 @@
 
 -export([init/1, handle/2]).
 
+-define(WATCH_INTERVAL, 3000).
+
 %% == Callbacks
 
 init(_Args) ->
+    {ok, Watch} = erwatch:new([{interval, ?WATCH_INTERVAL}]),
     State = #{base_url => undefined,
               remaining => <<>>,
-              ast => #{}},
+              ast => #{},
+              watch => Watch},
     {ok, State}.
 
 handle({data, Data}, #{remaining := Rem} = State) ->
@@ -28,7 +32,15 @@ handle({data, Data}, #{remaining := Rem} = State) ->
             end
     end;
 
-handle(_MiscMsg, State) ->
+handle({message, {erwatch@changes, _, Changes}}, State) ->
+    lists:foreach(fun(C) -> process_change(C, State) end, Changes),
+    {noreply, State};
+
+handle({message, {symbolsQ, Path}}, State) ->
+    Bin = path_bin_symbols(Path),
+    {reply, Bin, State};
+
+handle(_, State) ->
     {noreply, State}.
 
 decode(Bin) ->
@@ -56,10 +68,13 @@ process_messages(Msgs, State) ->
     {undefined | binary(), map()}.
 
 process_message({symbolsQ, Path}, State) ->
-    Ast = whatels_e:ast_path(Path),
-    Symbols = encode_symbols(whatels_e:symbols(Ast)),
-    Bin = whatels_msg:encode({symbols, Symbols}),
-    {Bin, State}.
+    Bin = path_bin_symbols(Path),
+    {Bin, State};
+
+process_message({watchX, BinWildcard}, #{watch := Watch} = State) ->
+    Wildcard = binary_to_list(BinWildcard),
+    erwatch:add_wildcard(Wildcard, Watch),
+    {undefined, State}.
 
 encode_functions(Functions) ->
     F = fun({Name, Arity, Line}) ->
@@ -80,8 +95,16 @@ encode_symbols(#{functions := Functions,
              errors => encode_errors(Errors)},
     % If module name is given, use it.
     case Module of
-        0 ->
-            Base;
-        _ ->
-            Base#{module => Module}
+        0 -> Base;
+        _ -> Base#{module => Module}
     end.
+
+process_change({deleted, _Path}, _State) ->
+    ok;
+process_change({_, Path}, _State) ->
+    self() ! {symbolsQ, Path}.
+
+path_bin_symbols(Path) ->
+    Ast = whatels_e:ast_path(Path),
+    Symbols = encode_symbols(whatels_e:symbols(Ast)),
+    whatels_msg:encode({symbols, list_to_binary(Path), Symbols}).
