@@ -1,27 +1,18 @@
-%%%-------------------------------------------------------------------
-%% @doc whatels public API
-%% @end
-%%%-------------------------------------------------------------------
-
--module('whatels_app').
-
+-module(whatels_app).
 -behaviour(application).
 
-%% Application callbacks
--export([start/2
-        ,stop/1]).
+-export([start/2,
+         stop/1]).
 
-%%====================================================================
-%% API
-%%====================================================================
+%% == API
 
 start(_StartType, _StartArgs) ->
-    'whatels_sup':start_link().
+    case application:get_env(whatels, port) of
+        undefined ->
+            whatels_sup:start_link();
+        {ok, Port} ->
+            whatels_sup:start_link([{port, Port}])
+    end.
 
-%%--------------------------------------------------------------------
 stop(_State) ->
     ok.
-
-%%====================================================================
-%% Internal functions
-%%====================================================================

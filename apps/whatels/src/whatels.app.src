@@ -5,9 +5,10 @@
   {mod, {'whatels_app', []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    erwatch
    ]},
-  {env,[]},
+  {env,[{port, 10998}]},
   {modules, []},
 
   {maintainers, ["Yuce Tekol"]},

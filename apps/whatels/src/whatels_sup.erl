@@ -1,35 +1,26 @@
-%%%-------------------------------------------------------------------
-%% @doc whatels top level supervisor.
-%% @end
-%%%-------------------------------------------------------------------
 
 -module(whatels_sup).
-
 -behaviour(supervisor).
 
-%% API
--export([start_link/0]).
-
-%% Supervisor callbacks
+-export([start_link/0,
+         start_link/1]).
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
 
-%%====================================================================
-%% API functions
-%%====================================================================
+%% == API
 
 start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+    start_link([]).
 
-%%====================================================================
-%% Supervisor callbacks
-%%====================================================================
+start_link(Args) ->
+    supervisor:start_link({local, ?SERVER}, ?MODULE, [Args]).
 
-%% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
-init([]) ->
+%% == Callbacks
+
+init([Args]) ->
     ServiceSpec = #{id => whatels_service,
-                    start => {whatels_service, start_link, []},
+                    start => {whatels_service, start_link, [Args]},
                     restart => permanent,
                     shutdown => 1000,
                     modules => [whatels_service]},
