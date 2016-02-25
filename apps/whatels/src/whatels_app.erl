@@ -7,10 +7,16 @@
 %% == API
 
 start(_StartType, _StartArgs) ->
-    case application:get_env(whatels, port) of
-        undefined ->
-            whatels_sup:start_link();
-        {ok, Port} ->
+    case os:getenv("WHATELS_PORT") of
+        false ->
+            case application:get_env(whatels, port) of
+                undefined ->
+                    whatels_sup:start_link();
+                {ok, Port} ->
+                    whatels_sup:start_link([{port, Port}])
+            end;
+        StrPort ->
+            Port = list_to_integer(StrPort),
             whatels_sup:start_link([{port, Port}])
     end.
 
