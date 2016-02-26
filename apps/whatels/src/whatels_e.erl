@@ -6,7 +6,8 @@
          symbols/1]).
 
 -type module_name() :: 0 | atom().
--type function_info() :: {atom(), integer(), integer()}.
+%                         name     line      arity       exported?
+-type function_info() :: {atom(), integer(), integer(), boolean()}.
 -type error_info() :: {binary() | string(), integer()}.
 -type symbols() :: #{functions => [function_info()],
                      errors => [error_info()],
@@ -24,22 +25,42 @@ ast_path(Path) ->
     {ast, Ast}.
 
 -spec symbols(A :: {ast, list()}) -> symbols().
-symbols({ast, Ast}) ->
-    F = fun(A, {Module, Functions, Errors} = Acc) ->
+symbols(Ast) ->
+    {ModuleName, Functions, Errors, Exports} = extract_symbols(Ast),
+    ExportsSet = sets:from_list(Exports),
+    io:format("exports set: ~p~n", [ExportsSet]),
+    AnnotatedFunctions = annotate_functions(Functions, ExportsSet),
+    #{functions => AnnotatedFunctions,
+      errors => Errors,
+      module => ModuleName}.
+
+extract_symbols({ast, Ast}) ->
+    F = fun(A, {Module, Functions, Errors, Exports} = Acc) ->
         case A of
             {function, Line, Name, Arity, _} ->
-                {Module, [{Name, Arity, Line} | Functions], Errors};
+                {Module, [{Name, Arity, Line, false} | Functions], Errors, Exports};
             {error, {Line, _, _Err}} ->
                 % TODO: exact error
                 Err = <<"error">>,
-                {Module, Functions, [{Err, Line} | Errors]};
+                {Module, Functions, [{Err, Line} | Errors], Exports};
             {attribute, _, module, NewModule} when Module == 0 ->
-                {NewModule, Functions, Errors};
+                {NewModule, Functions, Errors, Exports};
+            {attribute, _, export, NewExports} ->
+                {Module, Functions, Errors, add_exports(NewExports, Exports)};
             _Other ->
                 Acc
         end
     end,
-    {ModuleName, Functions, Errors} = lists:foldl(F, {0, [], []}, Ast),
-    #{functions => lists:reverse(Functions),
-      errors => lists:reverse(Errors),
-      module => ModuleName}.
+    lists:foldl(F, {0, [], [], []}, Ast).
+
+annotate_functions(Functions, ExportsSet) ->
+    F = fun({Name, Arity, Line, _}) ->
+        Exported = sets:is_element({Name, Arity}, ExportsSet),
+        {Name, Arity, Line, Exported}
+    end,
+    lists:map(F, Functions).
+
+add_exports([], Exports) ->
+    Exports;
+add_exports([H|T], Exports) ->
+    add_exports(T, [H|Exports]).

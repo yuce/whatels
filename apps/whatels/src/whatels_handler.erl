@@ -1,7 +1,8 @@
 -module(whatels_handler).
 -behaviour(monkey_handler).
 
--export([init/1, handle/2]).
+-export([init/1,
+         handle/2]).
 
 -define(WATCH_INTERVAL, 3000).
 
@@ -77,8 +78,11 @@ process_message({watchX, BinWildcard}, #{watch := Watch} = State) ->
     {undefined, State}.
 
 encode_functions(Functions) ->
-    F = fun({Name, Arity, Line}) ->
-        #{name => Name, arity => Arity, line => Line}
+    F = fun({Name, Arity, Line, Exported}) ->
+        #{name => Name,
+          arity => Arity,
+          line => Line,
+          exported => Exported}
     end,
     lists:map(F, Functions).
 
