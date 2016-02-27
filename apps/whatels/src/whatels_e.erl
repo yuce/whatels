@@ -1,7 +1,5 @@
 -module(whatels_e).
 
--define(FOO, bar).
-
 -export([ast_path/1,
          symbols/1]).
 
@@ -28,7 +26,6 @@ ast_path(Path) ->
 symbols(Ast) ->
     {ModuleName, Functions, Errors, Exports} = extract_symbols(Ast),
     ExportsSet = sets:from_list(Exports),
-    io:format("exports set: ~p~n", [ExportsSet]),
     AnnotatedFunctions = annotate_functions(Functions, ExportsSet),
     #{functions => AnnotatedFunctions,
       errors => Errors,
