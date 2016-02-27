@@ -19,6 +19,9 @@ encode({symbols, Path, Symbols}) when is_binary(Path) ->
 encode({symbolsQ, Path}) ->
     encode_msg(<<"path-symbols?">>, Path);
 
+encode({discard, Path}) ->
+    encode_msg(<<"discard!">>, Path);
+
 encode({error, parse_error}) ->
     encode_msg(<<"error">>, <<"parse error">>).
 

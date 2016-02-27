@@ -4,7 +4,7 @@
 -export([init/1,
          handle/2]).
 
--define(WATCH_INTERVAL, 3000).
+-define(WATCH_INTERVAL, 1000).
 
 %% == Callbacks
 
@@ -39,6 +39,10 @@ handle({message, {erwatch@changes, _, Changes}}, State) ->
 
 handle({message, {symbolsQ, Path}}, State) ->
     Bin = path_bin_symbols(Path),
+    {reply, Bin, State};
+
+handle({message, {discard, _Path} = M}, State) ->
+    Bin = whatels_msg:encode(M),
     {reply, Bin, State};
 
 handle(_, State) ->
@@ -103,8 +107,9 @@ encode_symbols(#{functions := Functions,
         _ -> Base#{module => Module}
     end.
 
-process_change({deleted, _Path}, _State) ->
-    ok;
+process_change({deleted, Path}, _State) ->
+    self() ! {discard, Path};
+
 process_change({_, Path}, _State) ->
     self() ! {symbolsQ, Path}.
 
