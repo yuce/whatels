@@ -7,14 +7,28 @@ Experimental Erlang language service. Requires Erlang/OTP 17+. Dependencies:
 * [monkey](https://github.com/yuce/monkey)
 * [erwatch](https://github.com/yuce/erwatch)
 
-# Build
+See [Erlang VSCode NEXT](https://github.com/yuce/vscode-erlang-next)
+for a [Visual Studio Code](https://code.visualstudio.com/) extension and
+[whatels node](https://www.npmjs.com/package/whatels)
+for a [NodeJS](https://nodejs.org) client.
+
+## Build
 
     $ rebar3 compile
 
-# Run
+## Run
 
     $ rebar3 as prod release
     $ _build/prod/rel/whatels/bin/whatels foreground
+
+## Messages
+
+### General message format
+
+    <MESSAGE NAME> <PAYLOAD SIZE>\r\n
+    <PAYLOAD>\r\n
+
+## License
 
 ```
 Copyright (c) 2016, Yuce Tekol <yucetekol@gmail.com>.
