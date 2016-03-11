@@ -148,7 +148,7 @@ path_bin_symbols(Path) ->
         {error, enoent} ->
             whatels_msg:encode({error, enoent});
         {error, Error} ->
-            whatels_msg:encode({error, <<"other_error">>});
+            whatels_msg:encode({error, Error});
         Ast ->
             Symbols = encode_symbols(whatels_e:symbols(Ast)),
             whatels_msg:encode({symbols, Path, Symbols})
