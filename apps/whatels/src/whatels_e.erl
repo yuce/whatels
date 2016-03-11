@@ -43,14 +43,17 @@
 
 
 -spec ast_path(Path :: string() | binary()) ->
-    {ast, list()}.
-
+    {ast, list()} | {error, term()}.
 ast_path(Path) when is_binary(Path) ->
     ast_path(binary_to_list(Path));
 
 ast_path(Path) ->
-    {ok, Ast} = epp:parse_file(Path, []),
-    {ast, Ast}.
+    case epp:parse_file(Path, []) of
+        {ok, Ast} ->
+            {ast, Ast};
+        {error, _} = Error ->
+            Error
+    end.
 
 -spec symbols(A :: {ast, list()}) -> symbols().
 symbols(Ast) ->

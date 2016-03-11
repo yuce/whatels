@@ -1,0 +1,7 @@
+[{<<"erwatch">>,{pkg,<<"erwatch">>,<<"0.2.2">>},0},
+ {<<"jsx">>,{pkg,<<"jsx">>,<<"2.8.0">>},0},
+ {<<"monkey">>,
+  {git,"https://github.com/yuce/monkey.git",
+       {ref,"5f77bd44b4bb2638c348b05ec472314a781c7688"}},
+  0},
+ {<<"yes_msg">>,{pkg,<<"yes_msg">>,<<"0.1.0">>},0}].

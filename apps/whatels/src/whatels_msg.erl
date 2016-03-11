@@ -41,34 +41,41 @@
 
 encode({symbols, Path, Symbols}) when is_binary(Path) ->
     BinSymbols = jsx:encode(Symbols),
-    Payload = <<Path/binary, "\r\n", BinSymbols/binary>>,
-    yes_msg:encode(<<"path-symbols">>, Payload);
+    Payload = <<Path/binary, "\r\n", BinSymbols/binary>>,    
+    encode_msg(<<"path-symbols">>, Payload);
 
 encode({symbolsQ, Path}) ->
-    yes_msg:encode(<<"path-symbols?">>, Path);
+    encode_msg(<<"path-symbols?">>, Path);
 
 encode({discard, Path}) ->
-    yes_msg:encode(<<"discard!">>, Path);
+    encode_msg(<<"discard!">>, Path);
 
 encode({error, parse_error}) ->
-    yes_msg:encode(<<"error">>, <<"parse error">>).
+    encode_msg(<<"error">>, <<"parse error">>);
+    
+encode({error, enoent}) ->
+    encode_msg(<<"error">>, <<"file not found">>);
+
+encode({error, Error}) ->
+    encode_msg(<<"error">>, Error).
+
 
 decode(Bin) ->
     decode_msg(Bin).
 
 %% == Internal
 
+encode_msg(Op, Payload) ->
+    {ok, BinMsg} = yes_msg:encode(Op, Payload),
+    BinMsg.
+
 decode_msg(Bin) ->
     F = fun({Op, Payload}) ->
         interp(Op, Payload)
     end,
-    case yes_msg:decode(Bin) of
-        {ok, BinMsgs, Rem} ->
-            Msgs = lists:map(F, lists:reverse(BinMsgs)),
-            {Msgs, Rem};
-        {error, Error} ->
-            {error, Error}
-    end.
+    {ok, BinMsgs, Rem} = yes_msg:decode(Bin),
+    Msgs = lists:map(F, lists:reverse(BinMsgs)),
+    {Msgs, Rem}.
 
 interp(<<"path-symbols">>, Payload) ->
     [Path, Json] = binary:split(Payload, <<"\r\n">>),
@@ -90,7 +97,7 @@ encode_test() ->
         #{<<"name">> => <<"getfun">>,
           <<"line">> => 15}
     ]},
-    {ok, R} = whatels_msg:encode({symbols, Path, Symbols}),
+    R = whatels_msg:encode({symbols, Path, Symbols}),
     ?assertEqual(E, R).
 
 decode_test() ->
@@ -114,5 +121,17 @@ decode_symbols_leftovers_test() ->
     {Ls, Rem} = whatels_msg:decode(Bin),
     ?assertEqual(Ls, []),
     ?assertEqual(Rem, <<"path-symbols?;0\r\n">>).
+    
+decode_symbolsQ_test() ->
+    Bin = <<"path-symbols?;60\r\n/home/yuce/Projects/whatels/apps/whatels/src/whatels_app.erl\r\n">>,
+    R = decode(Bin),
+    E = {[{symbolsQ, <<"/home/yuce/Projects/whatels/apps/whatels/src/whatels_app.erl">>}], <<>>},
+    ?assertEqual(E, R).
+    
+decode_watch_test() ->
+    Bin = <<"watch!;49\r\nhome/yuce/Projects/whatels/apps/whatels/src/*.erl\r\n">>,
+    R = decode(Bin),
+    E = {[{watchX, <<"home/yuce/Projects/whatels/apps/whatels/src/*.erl">>}], <<>>},
+    ?assertEqual(E, R).    
 
 -endif.

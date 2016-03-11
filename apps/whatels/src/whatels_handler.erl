@@ -138,12 +138,18 @@ encode_symbols(#{functions := Functions,
     end.
 
 process_change({deleted, Path}, _State) ->
-    self() ! {discard, Path};
+    self() ! {discard, list_to_binary(Path)};
 
 process_change({_, Path}, _State) ->
-    self() ! {symbolsQ, Path}.
+    self() ! {symbolsQ, list_to_binary(Path)}.
 
 path_bin_symbols(Path) ->
-    Ast = whatels_e:ast_path(Path),
-    Symbols = encode_symbols(whatels_e:symbols(Ast)),
-    whatels_msg:encode({symbols, list_to_binary(Path), Symbols}).
+    case whatels_e:ast_path(Path) of
+        {error, enoent} ->
+            whatels_msg:encode({error, enoent});
+        {error, Error} ->
+            whatels_msg:encode({error, <<"other_error">>});
+        Ast ->
+            Symbols = encode_symbols(whatels_e:symbols(Ast)),
+            whatels_msg:encode({symbols, Path, Symbols})
+    end.
